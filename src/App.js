@@ -6,9 +6,9 @@ import { ApolloProvider, useReactiveVar } from "@apollo/client";
 import { client, darkModeVar, isLoggedInvar } from "./apollo";
 import { ThemeProvider } from "styled-components";
 import { darkTheme, GlobalStyles, lightTheme } from "./styles";
-import SignUp from "./screens/SignUp";
 import routes from "./screens/routes";
 import { HelmetProvider } from "react-helmet-async";
+import SignUp from "./screens/SignUp";
 
 function App() {
   const isLoggedIn = useReactiveVar(isLoggedInvar);

@@ -15,6 +15,8 @@ import PageTitle from "../components/PageTitle";
 import { useForm } from "react-hook-form";
 import FormError from "../components/auth/FormError";
 import { gql, useMutation } from "@apollo/client";
+import { logUserIn } from "../apollo";
+import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 
 const FascebookLogin = styled.div`
   color: #285285;
@@ -22,6 +24,10 @@ const FascebookLogin = styled.div`
     margin-left: 10px;
     font-weight: 600;
   }
+`;
+
+const Notification = styled.div`
+  color: green;
 `;
 
 const LOGIN_MUTATION = gql`
@@ -35,21 +41,33 @@ const LOGIN_MUTATION = gql`
 `;
 
 function Login() {
+  const location = useLocation(); // sign에 데이터 값을 가져 올 수 있다. 예를 들어 회원가입 완료 로그인 하세요라는 경고문을 사인에서 보내서 여기서 받아서 출력 할 수 있고,
+  // 만든 아이디와 비밀번호를 로그인 창에 바로 입력 할 수 있게 defaultValues값을 통해 가져옴
   const {
     register,
     handleSubmit,
     getValues,
     setError,
+    clearErrors,
     formState: { errors, isValid },
-  } = useForm({ mode: "onChange" });
+  } = useForm({
+    mode: "onChange",
+    defaultValues: {
+      username: location?.state?.username || "",
+      password: location?.state?.password || "",
+    },
+  });
   const onCompleted = (data) => {
     const {
-      login: { ok, error },
+      login: { ok, error, token },
     } = data;
     if (!ok) {
-      setError("result", {
+      return setError("result", {
         message: error,
       });
+    }
+    if (token) {
+      logUserIn(token);
     }
   };
   const [login, { loading }] = useMutation(LOGIN_MUTATION, { onCompleted });
@@ -62,6 +80,9 @@ function Login() {
       variables: { username, password },
     });
   };
+  const clearLoginError = () => {
+    clearErrors("result");
+  };
 
   return (
     <AuthLayout>
@@ -70,6 +91,7 @@ function Login() {
         <div>
           <FontAwesomeIcon icon={faInstagram} size="3x" />
         </div>
+        <Notification>{location?.state?.message}</Notification>
         <form onSubmit={handleSubmit(onSubmitValid)}>
           <Input
             {...register("username", {
@@ -79,6 +101,7 @@ function Login() {
                 message: "5글자 이상 작성하세요.",
               },
             })}
+            onChange={clearLoginError}
             type="text"
             placeholder="전화번호, 사용자 이름 또는 이메일"
             $hasError={Boolean(errors?.username?.message)}
@@ -89,6 +112,7 @@ function Login() {
               required: "비밀번호를 입력 하세요.",
               message: "비밀번호를 입력하세요.",
             })}
+            onChange={clearLoginError}
             type="password"
             placeholder="비밀번호"
             $hasError={Boolean(errors?.password?.message)}

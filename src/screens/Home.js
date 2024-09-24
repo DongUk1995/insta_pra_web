@@ -1,10 +1,10 @@
-import { isLoggedInvar } from "../apollo";
+import { logUserOut } from "../apollo";
 
 function Home() {
   return (
     <div>
       <h1>Home</h1>
-      <button onClick={() => isLoggedInvar(false)}>Log out now!</button>
+      <button onClick={() => logUserOut()}>Log out now!</button>
     </div>
   );
 }
