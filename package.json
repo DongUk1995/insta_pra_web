@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@apollo/client": "^3.11.8",
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@fortawesome/fontawesome-svg-core": "^6.6.0",
     "@fortawesome/free-brands-svg-icons": "^6.6.0",
     "@fortawesome/free-regular-svg-icons": "^6.6.0",
@@ -20,6 +21,7 @@
     "react-hook-form": "^7.53.0",
     "react-router-dom": "^5.2.0",
     "react-scripts": "5.0.1",
+    "sanitize-html": "^2.13.1",
     "styled-components": "^6.1.13",
     "styled-reset": "^4.5.2",
     "web-vitals": "^2.1.4"

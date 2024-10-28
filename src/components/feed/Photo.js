@@ -1,3 +1,4 @@
+import { gql, useMutation } from "@apollo/client";
 import {
   faBookmark,
   faComment,
@@ -10,7 +11,7 @@ import PropTypes from "prop-types";
 import styled from "styled-components";
 import Avatar from "../Avatar";
 import { FatText } from "../shared";
-import { gql, useMutation } from "@apollo/client";
+import Comments from "./Comments";
 
 const TOGGLE_LIKE_MUTATION = gql`
   mutation toggleLike($id: Int!) {
@@ -20,7 +21,6 @@ const TOGGLE_LIKE_MUTATION = gql`
     }
   }
 `;
-
 const PhotoContainer = styled.div`
   background-color: white;
   border-radius: 4px;
@@ -34,20 +34,16 @@ const PhotoHeader = styled.div`
   align-items: center;
   border-bottom: 1px solid rgb(239, 239, 239);
 `;
-
 const Username = styled(FatText)`
   margin-left: 15px;
 `;
-
 const PhotoFile = styled.img`
   min-width: 100%;
   max-width: 100%;
 `;
-
 const PhotoData = styled.div`
   padding: 12px 15px;
 `;
-
 const PhotoActions = styled.div`
   display: flex;
   align-items: center;
@@ -60,30 +56,13 @@ const PhotoActions = styled.div`
     font-size: 20px;
   }
 `;
-
 const PhotoAction = styled.div`
   margin-right: 10px;
   cursor: pointer;
 `;
-
 const Likes = styled(FatText)`
   margin-top: 15px;
   display: block;
-`;
-
-const Comments = styled.div`
-  margin-top: 20px;
-`;
-const Comment = styled.div``;
-const CommentCaption = styled.span`
-  margin-left: 10px;
-`;
-const CommentCount = styled.span`
-  opacity: 0.7;
-  margin: 10px 0px;
-  display: block;
-  font-weight: 600;
-  font-size: 12px;
 `;
 
 function Photo({
@@ -101,39 +80,52 @@ function Photo({
       data: {
         toggleLike: { ok },
       },
-    } = result; // 결과 result의 data 안에 토클 라이크가 ok 값을 가져와서
+    } = result;
     if (ok) {
-      const fragmentId = `Photo:${id}`;
-      const fragment = gql`
-        fragment BSName on Photo {
-          isLiked
-          likes
-        }
-      `;
-      const result = cache.readFragment({
-        id: fragmentId,
-        fragment,
-      }); //이건 백엔드에서 가져온것이 아니라 캐시에서 가져온것이다.
-      if ("isLiked" in result && "likes" in result) {
-        const { isLiked: cacheIsLiked, likes: cacheLikes } = result;
-        cache.writeFragment({
-          id: fragmentId,
-          fragment: fragment,
-          data: {
-            isLiked: !isLiked,
-            likes: cacheIsLiked ? cacheLikes - 1 : cacheLikes + 1,
+      const photoId = `Photo:${id}`;
+      cache.modify({
+        id: photoId,
+        fields: {
+          isLiked(prev) {
+            return !prev;
           },
-        });
-      }
+          likes(prev) {
+            if (isLiked) {
+              return prev - 1;
+            }
+            return prev + 1;
+          },
+        },
+      });
+      // const fragmentId = `Photo:${id}`;
+      // const fragment = gql`
+      //   fragment BSName on Photo {
+      //     isLiked
+      //     likes
+      //   }
+      // `;
+      // const result = cache.readFragment({
+      //   id: fragmentId,
+      //   fragment,
+      // });
+      // if ("isLiked" in result && "likes" in result) {
+      //   const { isLiked: cacheIsLiked, likes: cacheLikes } = result;
+      //   cache.writeFragment({
+      //     id: fragmentId,
+      //     fragment,
+      //     data: {
+      //       isLiked: !cacheIsLiked,
+      //       likes: cacheIsLiked ? cacheLikes - 1 : cacheLikes + 1,
+      //     },
+      //   });
+      // }
     }
   };
-
   const [toggleLikeMutation] = useMutation(TOGGLE_LIKE_MUTATION, {
     variables: {
       id,
     },
     update: updateToggleLike,
-    //refetchQueries: [{ query: FEED_QUERY }], // 캐시를 통해 바로 변경됨 실시간 쿼리 전체가 업데이트 된다. 즉 쿼리가 많으면 비효율적이다.
   });
   return (
     <PhotoContainer key={id}>
@@ -145,7 +137,7 @@ function Photo({
       <PhotoData>
         <PhotoActions>
           <div>
-            <PhotoAction onClick={() => toggleLikeMutation()}>
+            <PhotoAction onClick={toggleLikeMutation}>
               <FontAwesomeIcon
                 style={{ color: isLiked ? "tomato" : "inherit" }}
                 icon={isLiked ? SolidHeart : faHeart}
@@ -163,31 +155,27 @@ function Photo({
           </div>
         </PhotoActions>
         <Likes>{likes === 1 ? "1 like" : `${likes} likes`}</Likes>
-        <Comments>
-          <Comment>
-            <FatText>{user.username}</FatText>
-            <CommentCaption>{caption}</CommentCaption>
-          </Comment>
-          <CommentCount>
-            {commentNumber === 1 ? "1 comment" : `${commentNumber} comments`}
-          </CommentCount>
-        </Comments>
+        <Comments
+          photoId={id}
+          author={user.username}
+          caption={caption}
+          commentNumber={commentNumber}
+          comments={comments}
+        />
       </PhotoData>
     </PhotoContainer>
   );
 }
-
 Photo.propTypes = {
   id: PropTypes.number.isRequired,
   user: PropTypes.shape({
     avatar: PropTypes.string,
     username: PropTypes.string.isRequired,
   }),
+  caption: PropTypes.string,
   file: PropTypes.string.isRequired,
   isLiked: PropTypes.bool.isRequired,
   likes: PropTypes.number.isRequired,
-  caption: PropTypes.string,
   commentNumber: PropTypes.number.isRequired,
-  comments: PropTypes.arrayOf(PropTypes.shape({})),
 };
 export default Photo;

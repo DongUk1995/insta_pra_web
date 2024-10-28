@@ -9,7 +9,6 @@ import { darkTheme, GlobalStyles, lightTheme } from "./styles";
 import routes from "./screens/routes";
 import { HelmetProvider } from "react-helmet-async";
 import SignUp from "./screens/SignUp";
-import Header from "./components/auth/Header";
 import Layout from "./components/auth/Layout";
 
 function App() {
